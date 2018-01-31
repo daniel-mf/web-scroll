@@ -18,6 +18,7 @@
     }
 
     class WebScroll {
+
         constructor(selector, {topIndex = 0} = {}) {
 
             if (!watchingWindowMove) {
@@ -39,11 +40,6 @@
             this.elements = [];
             this.pointers = {};
             this.observeScroll();
-        }
-
-        set structureData(data) {
-            this._structureData = data;
-            this.defineStructure();
         }
 
         set scrollTop(val) {
@@ -74,9 +70,11 @@
             return this._firstItemElement;
         }
 
-        createStructureElementAt(index, top, size) {
+        createStructureElementAt(index, top) {
             const element = document.createElement('div');
             element.classList.add('item');
+
+            this.wrapper.appendChild(element);
 
             this.positionElement(element, index, false);
 
@@ -85,16 +83,23 @@
 
         positionElement(itemElement, index, positionedUp) {
 
-            const structureSize = this._structureData[index];
+            itemElement.innerHTML = `<div><strong>${index + 1}</strong> of <strong>${this.length}</strong></div>`;
+
+            const elementHeight = itemElement.getBoundingClientRect().height;
 
             let top;
 
             if (!this.firstItemElement) {
-                top = -structureSize;
+                if (index === this.topIndex) {
+                    console.log('IS INDEX ZERO', index);
+                    top = 0;
+                } else {
+                    top = -elementHeight;
+                }
             } else {
                 if (positionedUp) {
                     const nextElement = this.getElementAt(index + 1);
-                    top = parseFloat(nextElement.dataset.listTop) - structureSize;
+                    top = parseFloat(nextElement.dataset.listTop) - elementHeight;
                 } else {
                     const previousElement = this.getElementAt(index - 1);
                     top = parseFloat(previousElement.dataset.listTop) + previousElement.getBoundingClientRect().height;
@@ -109,14 +114,12 @@
 
             itemElement.dataset.listIndex = index;
             itemElement.dataset.listTop = top;
-
-            itemElement.innerHTML = `<div><strong>${index}</strong> of <strong>${this._structureData.length}</strong></div>`;
             itemElement.style.transform = `translateZ(0) translateY(${top}px)`;
-            itemElement.style.height = `${structureSize}px`;
+            //itemElement.style.height = `${elementHeight}px`;
 
         }
 
-        defineStructure() {
+        render() {
 
             const listRect = this.list.getBoundingClientRect();
 
@@ -126,17 +129,17 @@
 
             let currentTop = 0;//listRect.top;
 
-            const topIndex = this.topIndex ? this.topIndex - 1 : 0;
+            const topIndex = this.topIndex > 0 ? this.topIndex - 1 : 0;
 
-            for (let [index, size] of this._structureData.slice(topIndex).entries()) {
+            for (let index = 0; topIndex + index < this.length; index++) {
 
                 const actualIndex = topIndex + index;
 
+                console.log('start', actualIndex);
+
                 if (!this.getElementAt(actualIndex)) {
 
-                    const newStructureElement = this.createStructureElementAt(actualIndex, currentTop, size);
-
-                    this.wrapper.appendChild(newStructureElement);
+                    const newStructureElement = this.createStructureElementAt(actualIndex, currentTop);
 
                     if (index === 0) {
                         this.firstItemElement = newStructureElement;
@@ -147,7 +150,7 @@
                     lastElement = newStructureElement;
 
                     if (stopNext) {
-                        console.log('stopped at', actualIndex);
+                        console.log('stopped at', index);
                         break;
                     }
 
@@ -158,6 +161,7 @@
                     currentTop += newStructureElement.getBoundingClientRect().height;
 
                 }
+
             }
 
             this.lastItemElement = lastElement;
@@ -218,7 +222,7 @@
                 const containerHeight = this.list.getBoundingClientRect().height;
 
                 if ((listTop + this.currentTranslateY) + elementHeight < containerHeight) {
-                    if (listIndex < this._structureData.length - 1) {
+                    if (listIndex < this.length - 1) {
                         this.recycleElementTo(this.firstItemElement, listIndex + 1, false);
                     } else {
                         this.cancelMovement = true;
@@ -259,17 +263,22 @@
 
         finishElasticity() {
 
-            if (this.reachedTopLimitAt) {
+            if (this.reachedTopLimitAt !== null) {
+
                 this.wrapper.classList.add('scroll-end');
                 this.translateTo({y: this.reachedTopLimitAt});
                 this.currentTranslateY = this.reachedTopLimitAt;
                 this.lastTranslateY = this.reachedTopLimitAt;
-            } else if (this.reachedBottomLimitAt) {
+
+            } else if (this.reachedBottomLimitAt !== null) {
+
                 this.wrapper.classList.add('scroll-end');
                 this.translateTo({y: this.reachedBottomLimitAt});
                 this.currentTranslateY = this.reachedBottomLimitAt;
                 this.lastTranslateY = this.reachedBottomLimitAt;
-            } else {
+
+            } else if (!this.cancelMovement) {
+
                 if (this.movementY !== 0) {
 
                     const up = this.movementY > 0;
@@ -294,6 +303,7 @@
 
                     //break smoothly
                 }
+
             }
 
         }
@@ -359,8 +369,9 @@
         }
 
         observeScroll() {
-            this.list.addEventListener('touchstart', () => this.pointerDown(event));
-            this.list.addEventListener('touchend', () => this.pointerUp(event));
+            this.list.addEventListener('touchstart', event => this.pointerDown(event));
+            this.list.addEventListener('touchend', event => this.pointerUp(event));
+            this.list.addEventListener('touchcancel', event => this.pointerUp(event));
         }
 
     }
@@ -370,35 +381,13 @@
 })(window);
 
 window.onload = function () {
+
     const list = new WebScroll('#list');
 
-    const data = [];
+    list.length = 400000;
+    list.topIndex = Math.round(list.length / 2) - 1;
+    //list.topIndex = 20;
 
-    let structureData = [
-        70, 80, 90, 100, 110, 120, 250,
-        70, 80, 90, 100, 110, 120, 250,
-        70, 80, 90, 100, 110, 120, 250,
-        70, 80, 90, 100, 110, 120, 250,
-        70, 80, 90, 100, 110, 120, 250,
-        70, 80, 90, 100, 110, 120, 250,
-        70, 80, 90, 100, 110, 120, 250,
-    ];
-
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-    structureData = [...structureData, ...structureData];
-
-    console.log(structureData.length);
-
-    list.topIndex = Math.round(structureData.length / 2);
-    //list.topIndex = 2;
-
-    list.structureData = structureData;
+    list.render();
 
 };
