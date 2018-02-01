@@ -9,7 +9,18 @@
 
             for (const {identifier, clientX, clientY} of changedTouches) {
 
-                if (webScroll.pointers[identifier]) {
+                const pointerRegister = webScroll.pointers[identifier];
+
+                if (pointerRegister) {
+
+                    //Registering the first movement gives us a smoother scrolling start
+                    if (!pointerRegister.ready) {
+                        pointerRegister.clientX = clientX;
+                        pointerRegister.clientY = clientY;
+                        pointerRegister.ready = true;
+                        continue;
+                    }
+
                     webScroll.pointerMove(identifier, clientX, clientY);
                 }
 
@@ -114,7 +125,7 @@
 
             itemElement.dataset.listIndex = index;
             itemElement.dataset.listTop = top;
-            itemElement.style.transform = `translateZ(0) translateY(${top}px)`;
+            itemElement.style.transform = `translate3d(0, ${top}px, 0)`;
             //itemElement.style.height = `${elementHeight}px`;
 
         }
@@ -243,67 +254,30 @@
 
             this.wrapper.classList.remove('scroll-end');
             for (const {identifier, clientX, clientY} of changedTouches) {
-                this.pointers[identifier] = {clientX, clientY};
+
+                //X and Y are only registered at the very first touch movement, for a smoother start
+                this.pointers[identifier] = {ready: false}; //clientX, clientY,
+
             }
         }
 
         pointerUp({changedTouches}) {
 
-            for (const {identifier, clientX, clientY} of changedTouches) {
+            let finish = false;
+
+            for (const {identifier} of changedTouches) {
 
                 this.lastTranslateY = this.currentTranslateY;
-                this.lastTranslateX = this.currentTranslateX;
+
+                if (this.pointers[identifier].ready) {
+                    finish = true;
+                }
 
                 delete this.pointers[identifier];
             }
 
-            this.finishElasticity();
-
-        }
-
-        finishElasticity() {
-
-            if (this.reachedTopLimitAt !== null) {
-
-                this.wrapper.classList.add('scroll-end');
-                this.translateTo({y: this.reachedTopLimitAt});
-                this.currentTranslateY = this.reachedTopLimitAt;
-                this.lastTranslateY = this.reachedTopLimitAt;
-
-            } else if (this.reachedBottomLimitAt !== null) {
-
-                this.wrapper.classList.add('scroll-end');
-                this.translateTo({y: this.reachedBottomLimitAt});
-                this.currentTranslateY = this.reachedBottomLimitAt;
-                this.lastTranslateY = this.reachedBottomLimitAt;
-
-            } else if (!this.cancelMovement) {
-
-                if (this.movementY !== 0) {
-
-                    const up = this.movementY > 0;
-
-                    this.movementY *= .25;
-
-                    const breakRatio = 0.0075 * (up ? this.movementY : -this.movementY);
-
-                    let ratio = 0;
-
-                    this.smothInterval = setInterval(() => {
-                        if ((up && ratio < this.movementY) || (!up && ratio > this.movementY)) {
-                            this.currentTranslateY += this.movementY - ratio;
-                            this.translateTo({y: this.currentTranslateY});
-                            this.lastTranslateY = this.currentTranslateY;
-                            ratio += up ? breakRatio : -breakRatio;
-                            this.refreshList();
-                        } else {
-                            clearInterval(this.smothInterval);
-                        }
-                    }, 0);
-
-                    //break smoothly
-                }
-
+            if (finish) {
+                this.finishElasticity();
             }
 
         }
@@ -364,8 +338,55 @@
 
         }
 
+        finishElasticity() {
+
+            if (this.reachedTopLimitAt !== null) {
+
+                this.wrapper.classList.add('scroll-end');
+                this.translateTo({y: this.reachedTopLimitAt});
+                this.currentTranslateY = this.reachedTopLimitAt;
+                this.lastTranslateY = this.reachedTopLimitAt;
+
+            } else if (this.reachedBottomLimitAt !== null) {
+
+                this.wrapper.classList.add('scroll-end');
+                this.translateTo({y: this.reachedBottomLimitAt});
+                this.currentTranslateY = this.reachedBottomLimitAt;
+                this.lastTranslateY = this.reachedBottomLimitAt;
+
+            } else if (!this.cancelMovement) {
+
+                if (this.movementY !== 0) {
+
+                    const up = this.movementY > 0;
+
+                    this.movementY *= .25;
+
+                    const breakRatio = 0.0075 * (up ? this.movementY : -this.movementY);
+
+                    let ratio = 0;
+
+                    this.smothInterval = setInterval(() => {
+                        if ((up && ratio < this.movementY) || (!up && ratio > this.movementY)) {
+                            this.currentTranslateY += this.movementY - ratio;
+                            this.translateTo({y: this.currentTranslateY});
+                            this.lastTranslateY = this.currentTranslateY;
+                            ratio += up ? breakRatio : -breakRatio;
+                            this.refreshList();
+                        } else {
+                            clearInterval(this.smothInterval);
+                        }
+                    }, 0);
+
+                    //break smoothly
+                }
+
+            }
+
+        }
+
         translateTo({y}) {
-            this.wrapper.style.transform = `translateZ(0) translateY(${y}px)`;
+            this.wrapper.style.transform = `translate3d(0,${y}px,0)`;
         }
 
         observeScroll() {
