@@ -118,7 +118,12 @@
 
 	    positionElement(itemElement, index, positionedUp) {
 
-	        this.fireEvent('elementRequested', itemElement, index, positionedUp);
+	        this.fireEvent('elementRequested', itemElement, index, function (transform) {
+	            // noinspection EqualityComparisonWithCoercionJS
+	            if (itemElement.dataset.listIndex == index) {
+	                transform();
+	            }
+	        });
 
 	        const elementHeight = itemElement.getBoundingClientRect().height;
 
