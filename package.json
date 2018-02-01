@@ -1,0 +1,16 @@
+{
+  "name": "webscroll",
+  "version": "1.0.0",
+  "description": "Smooth enormous scrolling list",
+  "main": "build/webscroll.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w -m inline"
+  },
+  "author": "Daniel MF <echo.dmf@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "rollup": "^0.43.0",
+    "rollup-watch": "^4.0.0"
+  }
+}
