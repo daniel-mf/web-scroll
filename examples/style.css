@@ -1,59 +1,68 @@
-.full {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-body {
-  margin: 0;
-  font-family: monospace;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
 .container {
-  position: absolute;
-  left: 0px;
-  right: 0px;
-  top: 0px;
-  bottom: 0px;
+  position: relative;
   touch-action: none;
-  background-color: #ddd;
-  overflow: visible;
+  overflow: hidden;
 }
-.container .wrapper {
+.container > .wrapper {
   position: absolute;
   width: 100%;
   will-change: transform;
   perspective: 1000px;
 }
-.container .wrapper.scroll-end {
+.container > .wrapper.scroll-end {
   transition: transform 0.15s ease-out;
 }
-.container .wrapper .item {
+.container > .wrapper > .item {
   position: absolute;
   top: 0;
   width: 100%;
-  height: 120px;
   box-sizing: border-box;
+  will-change: transform;
+}
+.container > .wrapper > .item .dynamic-data > .data-place-holder {
+  display: block;
+  pointer-events: none;
+  color: transparent !important;
+  background: url("img/loader.gif") no-repeat center center;
+  background-size: 32px;
+}
+body {
+  margin: 0;
+  font-family: sans-serif;
+  font-size: 12px;
+}
+.examples {
+  padding: 2em 4em;
+}
+.examples .container {
+  height: 80vh;
+  border: solid 2px #777;
+  margin: 0 auto;
+  background-color: #ddd;
+}
+.examples .container .wrapper .item {
   padding: 16px 16px 0;
   color: #444;
-  opacity: .5;
-  will-change: transform;
-  transform-style: preserve-3d;
+  font-family: monospace;
+  word-break: break-all;
 }
-.container .wrapper .item > div {
+.examples .container .wrapper .item > div {
   background-color: #fff;
-  height: 100%;
+  min-height: 100%;
   box-sizing: border-box;
   padding: 16px;
   border-radius: 20px;
 }
-.container .wrapper .item > div strong {
+.examples .container .wrapper .item > div strong {
   font-size: 20px;
 }
-.container:not(.debug) {
-  overflow: hidden;
+.examples .example {
+  margin-bottom: 2em;
 }
-.container:not(.debug) .item {
-  opacity: 1;
+.examples .example > .title {
+  margin: 0;
+  padding: 2em 0;
+}
+.examples .example.fixed-height .item {
+  height: 120px;
 }

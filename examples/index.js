@@ -1,40 +1,75 @@
 window.addEventListener('load', function () {
 
-    const list = new WebScroll('#list');
+    function createList(querySelector, options = {}) {
 
-    list.length = 400000;
-    list.topIndex = Math.round(list.length / 2) - 1;
+        const list = new WebScroll(querySelector, options);
 
-    const data = [];
+        list.length = 400000;
+        list.topIndex = Math.round(list.length / 2) - 1;
 
-    async function loadData(dataIndex) {
+        const data = [];
 
-        if (data.indexOf(dataIndex) > -1) {
-            return true; //previously loaded
+        async function loadData(dataIndex) {
+
+            if (data.indexOf(dataIndex) > -1) {
+                return true; //previously loaded
+            }
+
+            data.push(dataIndex);
+
+            return await new Promise(release => setTimeout(release, 1000));
+
         }
 
-        data.push(dataIndex);
+        const dataLength = {};
 
-        return await new Promise(release => setTimeout(release, 1000));
+        function getDataLength(dataIndex) {
+            if (!(dataIndex in dataLength)) {
+                dataLength[dataIndex] = Math.floor(50 + (Math.random() * 350));
+            }
+            return dataLength[dataIndex];
+        }
 
-    }
+        list.onElementRequested(function (element, index, transform) {
 
-    list.onElementRequested(function (element, index, transform) {
+            let dataPlaceHolder = '';
 
-        element.innerHTML = `<div><strong>${index + 1}</strong> of <strong>${this.length}</strong><span class="status"></span></div>`;
+            if (!options.fixedHeight) {
+                dataPlaceHolder = 'x'.repeat(getDataLength(index));
+            }
 
-        //load remote data
-        loadData(index).then(() => {
+            element.innerHTML = `
+                <div>
+                    <strong>${index + 1}</strong> of <strong>${this.length}</strong>
+                    <span class="status"></span>
+                    <div class="dynamic-data"><span class="data-place-holder">${dataPlaceHolder}</span></div>
+                </div>
+            `;
 
-            //transform will only execute if the element is still visible in the list
-            transform(() => {
-                element.querySelector('.status').textContent = 'transformed';
+            //load remote data
+            loadData(index).then(() => {
+
+                //transform will only execute if the element is still visible in the list
+                transform(() => {
+
+                    element.querySelector('.status').textContent = 'transformed';
+
+                    if (!options.fixedHeight) {
+                        element.querySelector('.dynamic-data').innerHTML = 'a'.repeat(getDataLength(index));
+                    }
+
+                });
+
             });
 
         });
 
-    });
+        list.render();
 
-    list.render();
+    }
+
+    createList('.fixed-height > .container', {fixedHeight: true});
+    createList('.dynamic-height > .container');
+
 
 });

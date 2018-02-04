@@ -1,30 +1,9 @@
-.full {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-
-body {
-  margin: 0;
-  font-family: monospace;
-  .full;
-}
-
 .container {
-
-  @space: 0px;
-
-  position: absolute;
-  left: @space;
-  right: @space;
-  top: @space*2;
-  bottom: @space*4;
+  position: relative;
   touch-action: none;
+  overflow: hidden;
 
-  background-color: #ddd;
-  overflow: visible;
-
-  .wrapper {
+  > .wrapper {
     position: absolute;
     width: 100%;
     will-change: transform;
@@ -34,27 +13,63 @@ body {
       transition: transform .15s ease-out;
     }
 
-    .item {
+    > .item {
       position: absolute;
       top: 0;
       width: 100%;
-      height: 120px;
       box-sizing: border-box;
-      padding: 16px 16px 0;
-      color: #444;
-      opacity: .5;
-
       will-change: transform;
-      transform-style: preserve-3d;
 
-      > div {
-        background-color: #fff;
-        height: 100%;
-        box-sizing: border-box;
-        padding: 16px;
-        border-radius: 20px;
-        strong {
-          font-size: 20px;
+      .dynamic-data > .data-place-holder {
+        display: block;
+        pointer-events: none;
+        color: transparent !important;
+        background: url("img/loader.gif") no-repeat center center;
+        background-size: 32px;
+      }
+
+    }
+
+  }
+
+}
+
+//example stuff
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  font-size: 12px;
+}
+
+.examples {
+
+  padding: 2em 4em;
+
+  .container {
+    height: 80vh;
+    border: solid 2px #777;
+    margin: 0 auto;
+    background-color: #ddd;
+
+    .wrapper {
+
+      .item {
+        padding: 16px 16px 0;
+        color: #444;
+
+        font-family: monospace;
+        word-break: break-all;
+
+        > div {
+          background-color: #fff;
+          min-height: 100%;
+          box-sizing: border-box;
+          padding: 16px;
+          border-radius: 20px;
+          strong {
+            font-size: 20px;
+          }
         }
       }
 
@@ -62,10 +77,18 @@ body {
 
   }
 
-  &:not(.debug) {
-    overflow: hidden;
-    .item {
-      opacity: 1;
+  .example {
+    > .title {
+      margin: 0;
+      padding: 2em 0;
+    }
+
+    margin-bottom: 2em;
+
+    &.fixed-height {
+      .item {
+        height: 120px;
+      }
     }
   }
 

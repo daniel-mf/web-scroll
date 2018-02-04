@@ -43,7 +43,7 @@ function windowPointerMove({changedTouches}) {
 
 class WebScroll {
 
-    constructor(selector, {topIndex = 0} = {}) {
+    constructor(selector, {topIndex = 0, fixedHeight = false} = {}) {
 
         if (!watchingWindowMove) {
             watchingWindowMove = true;
@@ -56,6 +56,8 @@ class WebScroll {
         this.wrapper = this.list.querySelector('.wrapper');
 
         this.topIndex = topIndex;
+        this.fixedHeight = fixedHeight;
+
         this.currentTranslateX = 0;
         this.currentTranslateY = 0;
         this.lastTranslateX = 0;
@@ -127,6 +129,20 @@ class WebScroll {
         return this;
     }
 
+    getItemElementHeight(element) {
+
+        if (this.fixedHeight) {
+
+            if (typeof this.fixedHeight === 'boolean') {
+                this.fixedHeight = element.getBoundingClientRect().height;
+            }
+
+            return this.fixedHeight;
+        }
+
+        return element.getBoundingClientRect().height;
+    }
+
     positionElement(itemElement, index, positionedUp) {
 
         this.fireEvent('elementRequested', itemElement, index, function (transform) {
@@ -136,7 +152,7 @@ class WebScroll {
             }
         });
 
-        const elementHeight = itemElement.getBoundingClientRect().height;
+        const elementHeight = this.getItemElementHeight(itemElement);
 
         let top;
 
@@ -152,7 +168,7 @@ class WebScroll {
                 top = parseFloat(nextElement.dataset.listTop) - elementHeight;
             } else {
                 const previousElement = this.getElementAt(index - 1);
-                top = parseFloat(previousElement.dataset.listTop) + previousElement.getBoundingClientRect().height;
+                top = parseFloat(previousElement.dataset.listTop) + this.getItemElementHeight(previousElement);
             }
         }
 
@@ -208,7 +224,7 @@ class WebScroll {
                     stopNext = true;
                 }
 
-                currentTop += newStructureElement.getBoundingClientRect().height;
+                currentTop += this.getItemElementHeight(newStructureElement);
 
             }
 
@@ -274,7 +290,7 @@ class WebScroll {
             const listTop = parseFloat(lastElement.dataset.listTop);
             const listIndex = parseInt(lastElement.dataset.listIndex);
 
-            const elementHeight = lastElement.getBoundingClientRect().height;
+            const elementHeight = this.getItemElementHeight(lastElement);
             const containerHeight = this.list.getBoundingClientRect().height;
 
             if ((listTop + this.currentTranslateY) + elementHeight < containerHeight) {
@@ -364,7 +380,7 @@ class WebScroll {
                 //elastic bottom
 
                 let bottomLimit = -(parseFloat(this.lastItemElement.dataset.listTop)
-                    + this.lastItemElement.getBoundingClientRect().height - this.list.getBoundingClientRect().height);
+                    + this.getItemElementHeight(this.lastItemElement) - this.list.getBoundingClientRect().height);
 
                 this.reachedBottomLimitAt = bottomLimit;
 

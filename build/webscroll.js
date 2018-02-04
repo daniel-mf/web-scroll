@@ -49,7 +49,7 @@
 
 	class WebScroll {
 
-	    constructor(selector, {topIndex = 0} = {}) {
+	    constructor(selector, {topIndex = 0, fixedHeight = false} = {}) {
 
 	        if (!watchingWindowMove) {
 	            watchingWindowMove = true;
@@ -62,6 +62,8 @@
 	        this.wrapper = this.list.querySelector('.wrapper');
 
 	        this.topIndex = topIndex;
+	        this.fixedHeight = fixedHeight;
+
 	        this.currentTranslateX = 0;
 	        this.currentTranslateY = 0;
 	        this.lastTranslateX = 0;
@@ -133,6 +135,20 @@
 	        return this;
 	    }
 
+	    getItemElementHeight(element) {
+
+	        if (this.fixedHeight) {
+
+	            if (typeof this.fixedHeight === 'boolean') {
+	                this.fixedHeight = element.getBoundingClientRect().height;
+	            }
+
+	            return this.fixedHeight;
+	        }
+
+	        return element.getBoundingClientRect().height;
+	    }
+
 	    positionElement(itemElement, index, positionedUp) {
 
 	        this.fireEvent('elementRequested', itemElement, index, function (transform) {
@@ -142,7 +158,7 @@
 	            }
 	        });
 
-	        const elementHeight = itemElement.getBoundingClientRect().height;
+	        const elementHeight = this.getItemElementHeight(itemElement);
 
 	        let top;
 
@@ -158,7 +174,7 @@
 	                top = parseFloat(nextElement.dataset.listTop) - elementHeight;
 	            } else {
 	                const previousElement = this.getElementAt(index - 1);
-	                top = parseFloat(previousElement.dataset.listTop) + previousElement.getBoundingClientRect().height;
+	                top = parseFloat(previousElement.dataset.listTop) + this.getItemElementHeight(previousElement);
 	            }
 	        }
 
@@ -214,7 +230,7 @@
 	                    stopNext = true;
 	                }
 
-	                currentTop += newStructureElement.getBoundingClientRect().height;
+	                currentTop += this.getItemElementHeight(newStructureElement);
 
 	            }
 
@@ -280,7 +296,7 @@
 	            const listTop = parseFloat(lastElement.dataset.listTop);
 	            const listIndex = parseInt(lastElement.dataset.listIndex);
 
-	            const elementHeight = lastElement.getBoundingClientRect().height;
+	            const elementHeight = this.getItemElementHeight(lastElement);
 	            const containerHeight = this.list.getBoundingClientRect().height;
 
 	            if ((listTop + this.currentTranslateY) + elementHeight < containerHeight) {
@@ -370,7 +386,7 @@
 	                //elastic bottom
 
 	                let bottomLimit = -(parseFloat(this.lastItemElement.dataset.listTop)
-	                    + this.lastItemElement.getBoundingClientRect().height - this.list.getBoundingClientRect().height);
+	                    + this.getItemElementHeight(this.lastItemElement) - this.list.getBoundingClientRect().height);
 
 	                this.reachedBottomLimitAt = bottomLimit;
 
