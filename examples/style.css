@@ -42,7 +42,6 @@ body {
   transform-style: preserve-3d;
 }
 .container .wrapper .item > div {
-  pointer-events: none;
   background-color: #fff;
   height: 100%;
   box-sizing: border-box;

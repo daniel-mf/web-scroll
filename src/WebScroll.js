@@ -2,7 +2,12 @@ let watchingWindowMove = false;
 
 const instances = [];
 
+let momentKillerTimer = null;
+
 function windowPointerMove({changedTouches}) {
+
+    clearTimeout(momentKillerTimer);
+
     for (const webScroll of instances) {
 
         for (const {identifier, clientX, clientY} of changedTouches) {
@@ -24,6 +29,16 @@ function windowPointerMove({changedTouches}) {
 
         }
     }
+
+    //avoids soft breaking movement when the user holds the touch still for 80ms
+    momentKillerTimer = setTimeout(function () {
+        for (const webScroll of instances) {
+            if (webScroll.hasAnyActivePointers) {
+                webScroll.killMoment();
+            }
+        }
+    }, 80);
+
 }
 
 class WebScroll {
@@ -49,7 +64,9 @@ class WebScroll {
         this.elements = [];
         this.pointers = {};
         this.events = {
-            elementRequested: []
+            elementRequested: [],
+            beforeElementRecycled: [],
+            afterElementRecycled: [],
         };
 
         this.observeScroll();
@@ -211,6 +228,9 @@ class WebScroll {
     }
 
     recycleElementTo(itemElement, newIndex, positionedUp) {
+
+        this.fireEvent('beforeElementRecycled', itemElement, newIndex, positionedUp);
+
         if (positionedUp) {
             const lastElementIndex = parseInt(this.lastItemElement.dataset.listIndex);
             this.positionElement(itemElement, newIndex, true);
@@ -220,6 +240,9 @@ class WebScroll {
             this.positionElement(itemElement, newIndex, false);
             this.firstItemElement = this.getElementAt(firstElementIndex + 1);
         }
+
+        this.fireEvent('afterElementRecycled', itemElement, newIndex, positionedUp);
+
     }
 
     refreshList() {
@@ -275,7 +298,7 @@ class WebScroll {
         clearInterval(this.smothInterval);
 
         this.wrapper.classList.remove('scroll-end');
-        for (const {identifier, clientX, clientY} of changedTouches) {
+        for (const {identifier} of changedTouches) {
 
             //X and Y are only registered at the very first touch movement, for a smoother start
             this.pointers[identifier] = {ready: false}; //clientX, clientY,
@@ -382,9 +405,9 @@ class WebScroll {
 
                 const up = this.movementY > 0;
 
-                this.movementY *= .25;
+                this.movementY *= .33;
 
-                const breakRatio = 0.0075 * (up ? this.movementY : -this.movementY);
+                const breakRatio = 0.002 * (up ? this.movementY : -this.movementY);
 
                 let ratio = 0;
 
@@ -415,6 +438,10 @@ class WebScroll {
         this.list.addEventListener('touchstart', event => this.pointerDown(event));
         this.list.addEventListener('touchend', event => this.pointerUp(event));
         this.list.addEventListener('touchcancel', event => this.pointerUp(event));
+    }
+
+    killMoment() {
+        this.movementY = 0;
     }
 
 }

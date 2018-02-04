@@ -21,14 +21,14 @@ window.addEventListener('load', function () {
 
     list.onElementRequested(function (element, index, transform) {
 
-        element.innerHTML = `<div><strong>${index + 1}</strong> of <strong>${this.length}</strong></div>`;
+        element.innerHTML = `<div><strong>${index + 1}</strong> of <strong>${this.length}</strong><span class="status"></span></div>`;
 
         //load remote data
         loadData(index).then(() => {
 
             //transform will only execute if the element is still visible in the list
             transform(() => {
-                element.innerHTML = `<div><strong>${index + 1}</strong> of <strong>${this.length}</strong> transformed</div>`;
+                element.querySelector('.status').textContent = 'transformed';
             });
 
         });
